@@ -1,15 +1,33 @@
-const mongoose = require('mongoose');
 const app = require('./app');
 const config = require('./config/config');
 const logger = require('./config/logger');
+const mysql = require('mysql')
 
 let server;
-mongoose.connect(config.mongoose.url, config.mongoose.options).then(() => {
-  logger.info('Connected to MongoDB');
-  server = app.listen(config.port, () => {
-    logger.info(`Listening to port ${config.port}`);
-  });
-});
+
+async function start() {
+
+  try {
+    const connection = mysql.createConnection({
+      host: process.env.MYSQL_HOST,
+      user: process.env.MYSQL_USERNAME,
+      password: process.env.MYSQL_PASSWORD,
+      database: process.env.MYSQL_DATABASE
+    })
+
+    connection.connect();
+    logger.info('Connected to MySql DB');
+
+    server = app.listen(config.port, () => {
+      logger.info(`Listening to port ${config.port}`);
+    });
+  } catch (e) {
+    //TODO: Handle Exception.
+  }
+}
+
+start();
+
 
 const exitHandler = () => {
   if (server) {

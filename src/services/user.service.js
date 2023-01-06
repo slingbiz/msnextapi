@@ -1,7 +1,7 @@
 const httpStatus = require('http-status');
-const { User } = require('../models');
+const {User} = require('../models');
 const ApiError = require('../utils/ApiError');
-
+const query = require('../utils/mysql');
 /**
  * Create a user
  * @param {Object} userBody
@@ -34,7 +34,10 @@ const queryUsers = async (filter, options) => {
  * @returns {Promise<User>}
  */
 const getUserById = async (id) => {
-  return User.findById(id);
+  // const users = await db.query("SELECT * FROM user");
+  // console.log(JSON.stringify(users), 'users');
+  const users = await query(`SELECT * FROM user WHERE user_id = ${id} limit 1`);
+  return users;
 };
 
 /**
@@ -43,7 +46,7 @@ const getUserById = async (id) => {
  * @returns {Promise<User>}
  */
 const getUserByEmail = async (email) => {
-  return User.findOne({ email });
+  return User.findOne({email});
 };
 
 /**
