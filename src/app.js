@@ -9,7 +9,9 @@ const httpStatus = require('http-status');
 const config = require('./config/config');
 const morgan = require('./config/morgan');
 const redis = require('redis');
+const cookies = require("cookie-parser");
 const session = require('express-session');
+
 const redisClient = redis.createClient({
   host: 'localhost',
   port: 6379,
@@ -32,6 +34,9 @@ if (config.env !== 'test') {
 
 // set security HTTP headers
 app.use(helmet());
+
+//Use cookies
+app.use(cookies());
 
 // Use Redis session
 redisClient.on('error', function (err) {
