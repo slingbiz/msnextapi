@@ -11,7 +11,7 @@ const createUser = catchAsync(async (req, res) => {
 
 
 const health = catchAsync(async (req, res) => {
-  res.status(200).send({msg: 'All Good'});
+  res.status(200).send({msg: 'All Good', sessionData: req.session)});
 });
 
 const getUsers = catchAsync(async (req, res) => {
