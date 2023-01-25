@@ -11,7 +11,8 @@ const createUser = catchAsync(async (req, res) => {
 
 
 const health = catchAsync(async (req, res) => {
-  res.status(200).send({msg: 'All Good', sessionData: req.session});
+  const { headers: { cookie } } = req;
+  res.status(200).send({msg: 'All Good', sessionData: req.session, cookie});
 });
 
 const getUsers = catchAsync(async (req, res) => {
