@@ -19,7 +19,7 @@ const { userOneAccessToken, adminAccessToken } = require('../fixtures/token.fixt
 setupTestDB();
 
 describe('Auth routes', () => {
-  describe('POST /v1/auth/register', () => {
+  describe('POST /v2/auth/register', () => {
     let newUser;
     beforeEach(() => {
       newUser = {
@@ -82,7 +82,7 @@ describe('Auth routes', () => {
     });
   });
 
-  describe('POST /v1/auth/login', () => {
+  describe('POST /v2/auth/login', () => {
     test('should return 200 and login user if email and password match', async () => {
       await insertUsers([userOne]);
       const loginCredentials = {
@@ -130,7 +130,7 @@ describe('Auth routes', () => {
     });
   });
 
-  describe('POST /v1/auth/logout', () => {
+  describe('POST /v2/auth/logout', () => {
     test('should return 204 if refresh token is valid', async () => {
       await insertUsers([userOne]);
       const expires = moment().add(config.jwt.refreshExpirationDays, 'days');
@@ -165,7 +165,7 @@ describe('Auth routes', () => {
     });
   });
 
-  describe('POST /v1/auth/refresh-tokens', () => {
+  describe('POST /v2/auth/refresh-tokens', () => {
     test('should return 200 and new auth tokens if refresh token is valid', async () => {
       await insertUsers([userOne]);
       const expires = moment().add(config.jwt.refreshExpirationDays, 'days');
@@ -234,7 +234,7 @@ describe('Auth routes', () => {
     });
   });
 
-  describe('POST /v1/auth/forgot-password', () => {
+  describe('POST /v2/auth/forgot-password', () => {
     beforeEach(() => {
       jest.spyOn(emailService.transport, 'sendMail').mockResolvedValue();
     });
@@ -262,7 +262,7 @@ describe('Auth routes', () => {
     });
   });
 
-  describe('POST /v1/auth/reset-password', () => {
+  describe('POST /v2/auth/reset-password', () => {
     test('should return 204 and reset the password', async () => {
       await insertUsers([userOne]);
       const expires = moment().add(config.jwt.resetPasswordExpirationMinutes, 'minutes');
@@ -355,7 +355,7 @@ describe('Auth routes', () => {
     });
   });
 
-  describe('POST /v1/auth/send-verification-email', () => {
+  describe('POST /v2/auth/send-verification-email', () => {
     beforeEach(() => {
       jest.spyOn(emailService.transport, 'sendMail').mockResolvedValue();
     });
@@ -383,7 +383,7 @@ describe('Auth routes', () => {
     });
   });
 
-  describe('POST /v1/auth/verify-email', () => {
+  describe('POST /v2/auth/verify-email', () => {
     test('should return 204 and verify the email', async () => {
       await insertUsers([userOne]);
       const expires = moment().add(config.jwt.verifyEmailExpirationMinutes, 'minutes');

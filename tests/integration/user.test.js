@@ -10,7 +10,7 @@ const { userOneAccessToken, adminAccessToken } = require('../fixtures/token.fixt
 setupTestDB();
 
 describe('User routes', () => {
-  describe('POST /v1/users', () => {
+  describe('POST /v2/users', () => {
     let newUser;
 
     beforeEach(() => {
@@ -140,7 +140,7 @@ describe('User routes', () => {
     });
   });
 
-  describe('GET /v1/users', () => {
+  describe('GET /v2/users', () => {
     test('should return 200 and apply the default query options', async () => {
       await insertUsers([userOne, userTwo, admin]);
 
@@ -350,7 +350,7 @@ describe('User routes', () => {
     });
   });
 
-  describe('GET /v1/users/:userId', () => {
+  describe('GET /v2/users/:userId', () => {
     test('should return 200 and the user object if data is ok', async () => {
       await insertUsers([userOne]);
 
@@ -417,7 +417,7 @@ describe('User routes', () => {
     });
   });
 
-  describe('DELETE /v1/users/:userId', () => {
+  describe('DELETE /v2/users/:userId', () => {
     test('should return 204 if data is ok', async () => {
       await insertUsers([userOne]);
 
@@ -478,7 +478,7 @@ describe('User routes', () => {
     });
   });
 
-  describe('PATCH /v1/users/:userId', () => {
+  describe('PATCH /v2/users/:userId', () => {
     test('should return 200 and successfully update user if data is ok', async () => {
       await insertUsers([userOne]);
       const updateBody = {

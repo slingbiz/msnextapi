@@ -1,7 +1,7 @@
+const mysql = require('mysql');
 const app = require('./app');
 const config = require('./config/config');
 const logger = require('./config/logger');
-const mysql = require('mysql')
 
 let server;
 
