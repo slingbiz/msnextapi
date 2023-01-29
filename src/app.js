@@ -42,7 +42,7 @@ app.use(xss());
 app.use(compression());
 
 // enable cors
-app.use(cors());
+app.use(cors({ credentials: true, origin: ["https://myaccount.motorsingh.com", "https://www.motorsingh.com", "https://motorsingh.com"] }));
 app.options('*', cors());
 
 // jwt authentication
