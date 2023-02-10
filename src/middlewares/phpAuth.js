@@ -12,11 +12,10 @@ const httpStatus = require('http-status');
 const phpAuth = async function (req, res, next) {
   console.log(JSON.stringify(req.cookies.PHPSESSID));
   const response = await axios.get('https://www.motorsingh.com/user/validate', {
-    // headers: { Cookie: `PHPSESSID=${req.cookies.PHPSESSID};` },
-    headers: { Cookie: `PHPSESSID=7e952iigfbbkvle1v0j61tn8c3` },
+    headers: { Cookie: `PHPSESSID=${req.cookies.PHPSESSID};` },
   });
   console.log(response.data);
-  if (response?.data) {
+  if (response?.data?.user_id) {
     // response?.data?.user_id
     req.phpSession = response.data;
     next();

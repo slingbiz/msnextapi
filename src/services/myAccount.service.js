@@ -13,9 +13,16 @@ const getMyCarListings = async (req = {}) => {
   return myCars;
 };
 
-const getMyLeadListings = async (id = 31) => {
-  const users = await query(`SELECT * FROM rfq where urlsrc like '%${id}%'`);
-  return users;
+const getMyLeadListings = async (req = {}) => {
+  const { phpSession } = req;
+  console.log(phpSession);
+  if (!phpSession) {
+    // return undefined;
+  }
+  const { user_id: userId, country, email, username } = phpSession;
+  const myCars = await query(`SELECT * FROM rfq where urlsrc like '%${userId}%'`);
+
+  return myCars;
 };
 
 module.exports = {
