@@ -6,6 +6,7 @@ const compression = require('compression');
 const cors = require('cors');
 const passport = require('passport');
 const httpStatus = require('http-status');
+const cookieParser = require('cookie-parser');
 const config = require('./config/config');
 const morgan = require('./config/morgan');
 const { jwtStrategy } = require('./config/passport');
@@ -13,7 +14,6 @@ const { authLimiter } = require('./middlewares/rateLimiter');
 const routes = require('./routes/v2');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
-const cookieParser = require("cookie-parser");
 
 const app = express();
 
@@ -25,7 +25,7 @@ if (config.env !== 'test') {
 // set security HTTP headers
 app.use(helmet());
 
-//Cookie parser
+// Cookie parser
 app.use(cookieParser());
 
 // parse json request body
@@ -42,7 +42,18 @@ app.use(xss());
 app.use(compression());
 
 // enable cors
-app.use(cors({ credentials: true, origin: ["https://myaccount.motorsingh.com", "https://www.motorsingh.com", "https://motorsingh.com"] }));
+app.use(
+  cors({
+    credentials: true,
+    origin: [
+      'https://myaccount.motorsingh.com',
+      'https://www.motorsingh.com',
+      'https://motorsingh.com',
+      'http://localhost:3000',
+      'http://localhost:2023',
+    ],
+  })
+);
 app.options('*', cors());
 
 // jwt authentication
