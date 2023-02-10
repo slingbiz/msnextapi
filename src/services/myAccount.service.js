@@ -10,6 +10,12 @@ const getMyCarListings = async (req) => {
   return myCars;
 };
 
+const getMyLeadListings = async (id = 31) => {
+  const users = await query(`SELECT * FROM rfq where urlsrc like '%${id}%'`);
+  return users;
+};
+
 module.exports = {
   getMyCarListings,
+  getMyLeadListings,
 };
