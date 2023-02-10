@@ -18,11 +18,11 @@ const getMyCarListings = catchAsync(async (req, res) => {
   // if (!req.phpSession?.user_id) {
   //   next(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
   // }
-  const result = await myAccountService.getMyCarListings(req.phpSession?.user_id);
+  const result = await myAccountService.getMyCarListings(req);
   if (!result) {
     res.status(HttpStatusCode.NoContent).send({ message: 'No record found' });
   }
-  res.send({ data: result });
+  res.send(result);
 });
 
 const getMyLeadListings = catchAsync(async (req, res) => {
