@@ -9,10 +9,11 @@ const createUser = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send(user);
 });
 
-
 const health = catchAsync(async (req, res) => {
-  const { headers: { cookie } } = req;
-  res.status(200).send({msg: 'All Good', sessionData: req.session, cookie});
+  const {
+    headers: { cookie },
+  } = req;
+  res.status(200).send({ msg: 'All Good', sessionData: req.session, cookie });
 });
 
 const getUsers = catchAsync(async (req, res) => {
@@ -30,10 +31,9 @@ const getUser = catchAsync(async (req, res) => {
   res.send(user);
 });
 
-const updateUser = catchAsync(async (req, res) => {
-  const user = await userService.updateUserById(req.params.userId, req.body);
-  res.send(user);
-});
+const updateUser = async (req, res) => {
+  await userService.updateUserById(req.params.userId, req.body, res);
+};
 
 const deleteUser = catchAsync(async (req, res) => {
   await userService.deleteUserById(req.params.userId);
@@ -46,5 +46,5 @@ module.exports = {
   getUser,
   updateUser,
   deleteUser,
-  health
+  health,
 };
