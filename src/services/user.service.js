@@ -35,7 +35,7 @@ const queryUsers = async () => {
  * @returns {Promise<User>}
  */
 const getUserById = async (id) => {
-  const users = await query(`SELECT * FROM user WHERE user_id = ${id} limit 1`);
+  const users = await query(`SELECT * FROM user WHERE user_id = ${id} LIMIT 1`);
   return users;
 };
 
@@ -49,12 +49,12 @@ const getUserByEmail = async (email) => {
 };
 
 const updateUserById = async (userId, updateBody, res) => {
-  const { email, name, currentPassword, newPassword, confirmNewPassword } = updateBody;
+  const { email, name, phone, country, currentPassword, newPassword, confirmNewPassword } = updateBody;
 
   const user = await getUserById(userId);
 
   if (currentPassword !== '' && newPassword !== '') {
-    bcrypt.compare(currentPassword, user[0].user_password, function (err, response) {
+    bcrypt.compare(currentPassword, user[0].user_password, async function (err, response) {
       if (err) {
         res.status(400).send(err);
       }
@@ -63,21 +63,22 @@ const updateUserById = async (userId, updateBody, res) => {
           const password = newPassword;
           const salt = bcrypt.genSaltSync(8);
           const hashedPassword = bcrypt.hashSync(password, salt);
-          const users = query(`UPDATE user 
-          SET user_name='${name}', user_email='${email}' , user_password='${hashedPassword}'
+          const users = await query(`UPDATE user
+          SET user_password='${hashedPassword}'
           WHERE user_id = ${userId}`);
-          res.status(200).send('User updated');
+          res.status(200).json({ message: 'User updated' });
+        } else {
+          res.status(400).json({ message: 'Passwords do not match' });
         }
-        res.status(400).send('Passwords do not match');
       } else {
-        res.status(400).send('Incorrect current password');
+        res.status(400).json({ message: 'Incorrect current password' });
       }
     });
   } else {
-    const users = await query(`UPDATE user 
-        SET user_name='${name}', user_email='${email}'
+    const users = await query(`UPDATE user
+        SET user_name='${name}', user_email='${email}', user_mobile='${phone}', country='${country}'
         WHERE user_id = ${userId}`);
-    res.status(200).send('User updated');
+    res.status(200).json({ message: 'User updated' });
   }
 };
 
