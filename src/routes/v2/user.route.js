@@ -7,21 +7,21 @@ const userController = require('../../controllers/user.controller');
 
 const router = express.Router();
 
-router
-  .route('/health')
-  .get(phpAuth, userController.health)
+router.route('/health').get(phpAuth, userController.health);
 
 router
   .route('/')
   .post(auth('manageUsers'), validate(userValidation.createUser), userController.createUser)
-  .get(auth('getUsers'), validate(userValidation.getUsers), userController.getUsers);
+  .get(validate(userValidation.getUsers), userController.getUsers);
+// .get(auth('getUsers'), validate(userValidation.getUsers), userController.getUsers);
 
 router
   .route('/:userId')
-  .get( userController.getUser)
-  // .get(auth('getUsers'), validate(userValidation.getUser), userController.getUser)
-  .patch(auth('manageUsers'), validate(userValidation.updateUser), userController.updateUser)
+  .get(userController.getUser)
+  .patch(userController.updateUser)
   .delete(auth('manageUsers'), validate(userValidation.deleteUser), userController.deleteUser);
+// .get(auth('getUsers'), validate(userValidation.getUser), userController.getUser)
+// .patch(auth('manageUsers'), validate(userValidation.updateUser), userController.updateUser)
 
 module.exports = router;
 
