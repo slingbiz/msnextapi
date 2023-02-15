@@ -31,7 +31,7 @@ const getMyLeadListings = catchAsync(async (req, res) => {
   // if (!req.phpSession?.user_id) {
   //   next(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
   // }
-  const result = await myAccountService.getMyLeadListings(req.phpSession?.user_id);
+  const result = await myAccountService.getMyLeadListings(req);
   if (!result) {
     res.status(HttpStatusCode.NoContent).send({ message: 'No record found' });
   }
