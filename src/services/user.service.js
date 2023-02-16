@@ -1,5 +1,6 @@
 const httpStatus = require('http-status');
-const bcrypt = require('bcryptjs');
+const md5 = require('md5');
+const { timingSafeEqual } = require('crypto');
 const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const query = require('../utils/mysql');
@@ -54,28 +55,22 @@ const updateUserById = async (userId, updateBody, res) => {
   const user = await getUserById(userId);
 
   if (currentPassword !== '' && newPassword !== '') {
-    bcrypt.compare(currentPassword, user[0].user_password, async function (err, response) {
-      if (err) {
-        res.status(400).send(err);
-      }
-      if (response) {
-        if (newPassword === confirmNewPassword) {
-          const password = newPassword;
-          const salt = bcrypt.genSaltSync(8);
-          const hashedPassword = bcrypt.hashSync(password, salt);
-          const users = await query(`UPDATE user
-          SET user_password='${hashedPassword}'
-          WHERE user_id = ${userId}`);
-          res.status(200).json({ message: 'User updated' });
-        } else {
-          res.status(400).json({ message: 'Passwords do not match' });
-        }
+    const OldPass = md5(currentPassword);
+    if (OldPass === user[0].user_password && timingSafeEqual(Buffer.from(OldPass), Buffer.from(user[0].user_password))) {
+      if (newPassword === confirmNewPassword) {
+        const newMDPass = md5(newPassword);
+        await query(`UPDATE user
+        SET user_password='${newMDPass}'
+        WHERE user_id = ${userId}`);
+        res.status(200).json({ message: 'User updated' });
       } else {
-        res.status(400).json({ message: 'Incorrect current password' });
+        res.status(400).json({ message: 'Passwords do not match' });
       }
-    });
+    } else {
+      res.status(400).json({ message: 'Incorrect current password' });
+    }
   } else {
-    const users = await query(`UPDATE user
+    await query(`UPDATE user
         SET user_name='${name}', user_email='${email}', user_mobile='${phone}', country='${country}'
         WHERE user_id = ${userId}`);
     res.status(200).json({ message: 'User updated' });
