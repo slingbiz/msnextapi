@@ -9,6 +9,8 @@ const router = express.Router();
 
 router.route('/health').get(phpAuth, userController.health);
 
+router.route('/cars-crawled/:userId').get(userController.userCarsCrawled);
+
 router
   .route('/')
   .post(auth('manageUsers'), validate(userValidation.createUser), userController.createUser)

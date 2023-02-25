@@ -7,6 +7,7 @@ const logger = require('./config/logger');
 const { EVENTS } = require('./config/events');
 
 const { createMessage } = require('./services/chat.service');
+const { getUserNameById } = require('./services/user.service');
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*', credentials: true } });
@@ -31,43 +32,49 @@ async function start() {
     io.on(EVENTS.connection, (socket) => {
       logger.info(`user connected ${socket.id}`);
 
-      /* Register fake user */
-      socket.on(EVENTS.CLIENT.FAKE_USER, (username) => {
-        if (!connectedUsers.hasOwnProperty(username)) {
-          connectedUsers[username] = username;
-        }
-
-        socket.emit(EVENTS.SERVER.USERS, Object.keys(connectedUsers));
-      });
-
       /* Register connected user */
-      socket.on(EVENTS.CLIENT.REGISTER, (username) => {
-        socket.username = username;
-        connectedUsers[username] = socket;
+      socket.on(EVENTS.CLIENT.REGISTER, async (id) => {
+        const userId = Number(id);
 
-        io.sockets.emit(EVENTS.SERVER.USERS, Object.keys(connectedUsers));
+        /** You can check phpAuth() here and put the below code in ifelse */
+
+        const name = await getUserNameById(userId);
+
+        socket.userId = userId; // eslint-disable-line no-param-reassign
+        socket.userName = name.user_name; // eslint-disable-line no-param-reassign
+        connectedUsers[userId] = socket;
+
+        const ActiveUsers = Object.values(connectedUsers).map((user) => ({
+          userId: user.userId,
+          userName: user.userName,
+        }));
+
+        io.sockets.emit(EVENTS.SERVER.USERS, ActiveUsers);
       });
 
-      socket.on(EVENTS.CLIENT.PRIVATE_CHAT, (data) => {
-        const { to, message, from } = data;
+      /* Private Chat */
+      socket.on(EVENTS.CLIENT.PRIVATE_CHAT, async (data) => {
+        const { to, message, car } = data;
 
-        if (connectedUsers.hasOwnProperty(to)) {
-          createMessage(data);
+        await createMessage(data);
 
+        if (Object.prototype.hasOwnProperty.call(connectedUsers, Number(to))) {
           try {
             connectedUsers[to].emit(EVENTS.CLIENT.PRIVATE_CHAT, {
-              sender: socket.username,
+              sender: socket.userId,
               message,
+              car,
               receiver: to,
             });
           } catch (e) {
-            socket.emit(EVENTS.SERVER.ERROR, { error: 'User offline' });
+            socket.emit(EVENTS.SERVER.ERROR, { error: `${e} - Error` });
           }
         } else {
-          socket.emit(EVENTS.SERVER.ERROR, { error: 'No user found' });
+          socket.emit(EVENTS.SERVER.ERROR, { error: 'User offline' });
         }
       });
 
+      /* Disconnect */
       socket.on('disconnect', () => {
         logger.info('user disconnected');
       });
@@ -75,8 +82,6 @@ async function start() {
 
     server.listen(config.port, () => {
       logger.info(`Listening to port ${config.port}`);
-
-      // socketServer({ io });
     });
   } catch (e) {
     // TODO: Handle Exception.

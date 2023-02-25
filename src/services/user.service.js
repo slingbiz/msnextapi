@@ -40,6 +40,11 @@ const getUserById = async (id) => {
   return users;
 };
 
+const getUserNameById = async (id) => {
+  const users = await query(`SELECT user_name FROM user WHERE user_id = ${id} LIMIT 1`);
+  return users[0];
+};
+
 /**
  * Get user by email
  * @param {string} email
@@ -91,11 +96,31 @@ const deleteUserById = async (userId) => {
   return user;
 };
 
+const getAllCarsCrawled = async (userId) => {
+  const cars = await query(`SELECT DISTINCT c.id, c.title, c.kms_run, c.price, other_user.user_id, other_user.user_name
+  FROM cars_crawled c
+  JOIN user u ON c.added_by = u.user_id
+  LEFT JOIN chats ch ON c.id = ch.car_crawled_id AND (ch.from_user = u.user_id OR ch.to_user = u.user_id)
+  JOIN user other_user ON (
+      (ch.to_user = u.user_id AND ch.from_user != u.user_id AND other_user.user_id = ch.from_user)
+      OR (ch.from_user = u.user_id AND ch.to_user != u.user_id AND other_user.user_id = ch.to_user)
+  )
+  WHERE c.added_by = ${userId} AND (
+      ch.to_user = ${userId} OR ch.from_user = ${userId}
+  )
+  
+  `);
+
+  return cars;
+};
+
 module.exports = {
   createUser,
   queryUsers,
   getUserById,
+  getUserNameById,
   getUserByEmail,
   updateUserById,
   deleteUserById,
+  getAllCarsCrawled,
 };
