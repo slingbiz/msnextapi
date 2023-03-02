@@ -1,5 +1,7 @@
 const httpStatus = require('http-status');
-const {User} = require('../models');
+const md5 = require('md5');
+const { timingSafeEqual } = require('crypto');
+const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const query = require('../utils/mysql');
 /**
@@ -23,8 +25,8 @@ const createUser = async (userBody) => {
  * @param {number} [options.page] - Current page (default = 1)
  * @returns {Promise<QueryResult>}
  */
-const queryUsers = async (filter, options) => {
-  const users = await User.paginate(filter, options);
+const queryUsers = async () => {
+  const users = await query(`SELECT * FROM user`);
   return users;
 };
 
@@ -34,10 +36,13 @@ const queryUsers = async (filter, options) => {
  * @returns {Promise<User>}
  */
 const getUserById = async (id) => {
-  // const users = await db.query("SELECT * FROM user");
-  // console.log(JSON.stringify(users), 'users');
-  const users = await query(`SELECT * FROM user WHERE user_id = ${id} limit 1`);
+  const users = await query(`SELECT * FROM user WHERE user_id = ${id} LIMIT 1`);
   return users;
+};
+
+const getUserNameById = async (id) => {
+  const users = await query(`SELECT user_name FROM user WHERE user_id = ${id} LIMIT 1`);
+  return users[0];
 };
 
 /**
@@ -46,26 +51,35 @@ const getUserById = async (id) => {
  * @returns {Promise<User>}
  */
 const getUserByEmail = async (email) => {
-  return User.findOne({email});
+  return User.findOne({ email });
 };
 
-/**
- * Update user by id
- * @param {ObjectId} userId
- * @param {Object} updateBody
- * @returns {Promise<User>}
- */
-const updateUserById = async (userId, updateBody) => {
+const updateUserById = async (userId, updateBody, res) => {
+  const { email, name, phone, country, currentPassword, newPassword, confirmNewPassword } = updateBody;
+
   const user = await getUserById(userId);
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+
+  if (currentPassword !== '' && newPassword !== '') {
+    const OldPass = md5(currentPassword);
+    if (OldPass === user[0].user_password && timingSafeEqual(Buffer.from(OldPass), Buffer.from(user[0].user_password))) {
+      if (newPassword === confirmNewPassword) {
+        const newMDPass = md5(newPassword);
+        await query(`UPDATE user
+        SET user_password='${newMDPass}'
+        WHERE user_id = ${userId}`);
+        res.status(200).json({ message: 'User updated' });
+      } else {
+        res.status(400).json({ message: 'Passwords do not match' });
+      }
+    } else {
+      res.status(400).json({ message: 'Incorrect current password' });
+    }
+  } else {
+    await query(`UPDATE user
+        SET user_name='${name}', user_email='${email}', user_mobile='${phone}', country='${country}'
+        WHERE user_id = ${userId}`);
+    res.status(200).json({ message: 'User updated' });
   }
-  if (updateBody.email && (await User.isEmailTaken(updateBody.email, userId))) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
-  }
-  Object.assign(user, updateBody);
-  await user.save();
-  return user;
 };
 
 /**
@@ -82,11 +96,31 @@ const deleteUserById = async (userId) => {
   return user;
 };
 
+const getAllCarsCrawled = async (userId) => {
+  const cars = await query(`SELECT DISTINCT c.id, c.title, c.kms_run, c.price, other_user.user_id, other_user.user_name
+  FROM cars_crawled c
+  JOIN user u ON c.added_by = u.user_id
+  LEFT JOIN chats ch ON c.id = ch.car_crawled_id AND (ch.from_user = u.user_id OR ch.to_user = u.user_id)
+  JOIN user other_user ON (
+      (ch.to_user = u.user_id AND ch.from_user != u.user_id AND other_user.user_id = ch.from_user)
+      OR (ch.from_user = u.user_id AND ch.to_user != u.user_id AND other_user.user_id = ch.to_user)
+  )
+  WHERE c.added_by = ${userId} AND (
+      ch.to_user = ${userId} OR ch.from_user = ${userId}
+  )
+  
+  `);
+
+  return cars;
+};
+
 module.exports = {
   createUser,
   queryUsers,
   getUserById,
+  getUserNameById,
   getUserByEmail,
   updateUserById,
   deleteUserById,
+  getAllCarsCrawled,
 };
