@@ -40,11 +40,17 @@ const deleteUser = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
+const userCarsCrawled = catchAsync(async (req, res) => {
+  const result = await userService.getAllCarsCrawled(req.params.userId);
+  res.status(200).send(result);
+});
+
 module.exports = {
   createUser,
   getUsers,
   getUser,
   updateUser,
   deleteUser,
+  userCarsCrawled,
   health,
 };
