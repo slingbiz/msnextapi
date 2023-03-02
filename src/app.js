@@ -46,6 +46,7 @@ app.use(
   cors({
     credentials: true,
     origin: [
+      '*',
       'https://myaccount.motorsingh.com',
       'https://www.motorsingh.com',
       'https://motorsingh.com',
