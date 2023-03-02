@@ -46,12 +46,12 @@ app.use(
   cors({
     credentials: true,
     origin: [
-      '*',
       'https://myaccount.motorsingh.com',
       'https://www.motorsingh.com',
       'https://motorsingh.com',
       'http://localhost:3000',
       'http://localhost:2023',
+      'http://www.localhost:8888',
     ],
   })
 );
