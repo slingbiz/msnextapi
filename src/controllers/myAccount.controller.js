@@ -26,11 +26,6 @@ const getMyCarListings = catchAsync(async (req, res) => {
 });
 
 const getMyLeadListings = catchAsync(async (req, res) => {
-  // const filter = pick(req.query, ['name', 'role']);
-  // const options = pick(req.query, ['sortBy', 'limit', 'page']);
-  // if (!req.phpSession?.user_id) {
-  //   next(new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate'));
-  // }
   const result = await myAccountService.getMyLeadListings(req);
   if (!result) {
     res.status(HttpStatusCode.NoContent).send({ message: 'No record found' });
@@ -38,8 +33,26 @@ const getMyLeadListings = catchAsync(async (req, res) => {
   res.send({ data: result });
 });
 
+const getMyRFQListings = catchAsync(async (req, res) => {
+  const result = await myAccountService.getMyRFQListings(req);
+  if (!result) {
+    res.status(HttpStatusCode.NoContent).send({ message: 'No record found' });
+  }
+  res.send({ data: result });
+});
+
+const updateStatus = catchAsync(async (req, res) => {
+  const result = await myAccountService.updateStatus(req);
+  if (!result) {
+    res.status(HttpStatusCode.NoContent).send({ message: 'No record found' });
+  }
+  res.status(200).json({ message: 'RFQ status updated' });
+});
+
 module.exports = {
   health,
   getMyCarListings,
   getMyLeadListings,
+  getMyRFQListings,
+  updateStatus,
 };
