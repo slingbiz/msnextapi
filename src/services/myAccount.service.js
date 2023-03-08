@@ -1,3 +1,4 @@
+const Papa = require('papaparse');
 const query = require('../utils/mysql');
 
 const getMyCarListings = async (req = {}) => {
@@ -18,7 +19,7 @@ const getMyLeadListings = async (req = {}) => {
   // const { phpSession, body } = req;
   // const { user_id: userId } = phpSession;
 
-  const { filterValue = '', make = '', model = '', startRange = '', endRange = '' } = body;
+  const { filterValue = '', city = '', make = '', model = '', startRange = '', endRange = '' } = body;
 
   if (filterValue === 'ALL') {
     const myCars = await query(`SELECT * FROM leads`);
@@ -32,6 +33,11 @@ const getMyLeadListings = async (req = {}) => {
   `;
 
   const params = [];
+
+  if (city !== '') {
+    carQuery += ' AND leads.city = ?';
+    params.push(city);
+  }
 
   if (make !== '') {
     carQuery += ' AND leads.make = ?';
@@ -126,9 +132,70 @@ const updateStatus = async (req = {}) => {
   return newStatus;
 };
 
+// const addLeads = async (req = {}) => {
+//   if (req.file) {
+//     const csvData = req.file.buffer.toString();
+//     const parsedData = Papa.parse(csvData, { header: true }).data;
+
+//     const filteredData = parsedData.filter((obj) => obj.name && obj.email && obj.make && obj.model && obj.variant);
+
+//     const sqlQuery = `
+//     START TRANSACTION;
+//     ${filteredData
+//       .map(
+//         (obj) => `
+//       INSERT INTO leads (name, mobile1, mobile2, email, price, make, model, variant, is_dealer, is_whatsapp, is_verified, slot_no, original_id, domain, status) VALUES ('${obj.name}', '${obj.mobile1}', '${obj.mobile2}', '${obj.email}', '${obj.price}', '${obj.make}', '${obj.model}', '${obj.variant}', ${obj.is_dealer}, ${obj.is_whatsapp}, ${obj.is_verified}, '${obj.slot_no}', '${obj.original_id}', '${obj.domain}', '${obj.status}');
+//     `
+//       )
+//       .join('\n')}
+//     COMMIT;
+//   `;
+
+//     const newLeads = await query(sqlQuery);
+
+//     return newLeads;
+//   }
+// };
+
+const addLeads = async (req = {}) => {
+  if (req.file) {
+    const csvData = req.file.buffer.toString();
+    const parsedData = Papa.parse(csvData, { header: true }).data;
+
+    const filteredData = parsedData.filter((obj) => obj.name && obj.email && obj.make && obj.model && obj.variant);
+
+    // Prepare SQL query
+    const placeholders = filteredData.map((row) => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(',');
+    const values = filteredData.flatMap((row) => [
+      row.name,
+      row.mobile1,
+      row.mobile2,
+      row.email,
+      row.price,
+      row.city,
+      row.make,
+      row.model,
+      row.variant,
+      row.is_dealer,
+      row.is_whatsapp,
+      row.is_verified,
+      row.slot_no,
+      row.original_id,
+      row.domain,
+    ]);
+
+    const sqlQuery = `INSERT INTO leads (name, mobile1, mobile2, email, price, city, make, model, variant, is_dealer, is_whatsapp, is_verified, slot_no, original_id, domain) VALUES ${placeholders}`;
+
+    const newLeads = await query(sqlQuery, values);
+
+    return newLeads;
+  }
+};
+
 module.exports = {
   getMyCarListings,
   getMyLeadListings,
   getMyRFQListings,
   updateStatus,
+  addLeads,
 };

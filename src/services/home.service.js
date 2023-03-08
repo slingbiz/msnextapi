@@ -27,7 +27,29 @@ const getModels = async (body) => {
   return models;
 };
 
+const getCities = async (queryString) => {
+  const { q = '' } = queryString;
+  const country = 'in';
+  const limit = 7;
+
+  let sql;
+  let params = [];
+
+  if (!q) {
+    sql = 'SELECT name FROM cities WHERE is_deleted = ? ORDER BY id LIMIT ?;';
+    params = [0, limit];
+  } else {
+    sql = 'SELECT name FROM cities WHERE country = ? AND name LIKE ? ORDER BY id LIMIT ?;';
+    params = [country, `%${q}%`, limit];
+  }
+
+  const cities = await query(sql, params);
+
+  return cities;
+};
+
 module.exports = {
   getBrands,
   getModels,
+  getCities,
 };
