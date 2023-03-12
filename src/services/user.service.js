@@ -97,7 +97,8 @@ const deleteUserById = async (userId) => {
 };
 
 const getAllCarsCrawled = async (userId) => {
-  const cars = await query(`SELECT DISTINCT c.id, c.title, c.kms_run, c.price, other_user.user_id, other_user.user_name
+  const cars =
+    await query(`SELECT DISTINCT c.id, c.img_src , c.title, c.kms_run, c.price, other_user.user_id, other_user.user_name
   FROM cars_crawled c
   JOIN user u ON c.added_by = u.user_id
   LEFT JOIN chats ch ON c.id = ch.car_crawled_id AND (ch.from_user = u.user_id OR ch.to_user = u.user_id)
