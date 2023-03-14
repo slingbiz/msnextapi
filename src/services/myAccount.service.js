@@ -9,7 +9,7 @@ const getMyCarListings = async (req = {}) => {
     // return undefined;
   }
   const { user_id: userId, country, email, username } = phpSession;
-  const myCars = await query(`SELECT * FROM cars_crawled WHERE added_by = ${userId}`);
+  const myCars = await query(`SELECT * FROM cars_crawled WHERE added_by = '${userId}'`);
 
   return myCars;
 };
@@ -28,8 +28,8 @@ const getMyLeadListings = async (req = {}) => {
 
   let carQuery = `
     SELECT *
-    FROM leads 
-    WHERE 1=1 
+    FROM leads
+    WHERE 1=1
   `;
 
   const params = [];
@@ -72,8 +72,7 @@ const getMyRFQListings = async (req = {}) => {
 
   if (filterValue === 'ALL') {
     const myCars = await query(
-      `SELECT * FROM cars_crawled JOIN rfq ON rfq.urlSrc LIKE CONCAT('%', cars_crawled.id, '%') AND cars_crawled.added_by = ?`,
-      [userId]
+      `SELECT * FROM cars_crawled JOIN rfq ON rfq.urlSrc LIKE CONCAT('%', cars_crawled.id, '%') AND cars_crawled.added_by = '${userId}'`
     );
     return myCars;
   }
