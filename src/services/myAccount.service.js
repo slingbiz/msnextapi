@@ -1,5 +1,6 @@
 const Papa = require('papaparse');
 const query = require('../utils/mysql');
+const { isSubscribed } = require('./user.service');
 
 const getMyCarListings = async (req = {}) => {
   // const users = await query(`SELECT * FROM cars_crawled`);
@@ -15,16 +16,13 @@ const getMyCarListings = async (req = {}) => {
 };
 
 const getMyLeadListings = async (req = {}) => {
-  const { body } = req;
-  // const { phpSession, body } = req;
-  // const { user_id: userId } = phpSession;
-
+  const { phpSession, body } = req;
+  const { user_id: userId } = phpSession;
   const { filterValue = '', city = '', make = '', model = '', startRange = '', endRange = '' } = body;
 
-  if (filterValue === 'ALL') {
-    const myCars = await query(`SELECT * FROM leads`);
-    return myCars;
-  }
+  const isSub = await isSubscribed(userId);
+
+  const myCars = { subscribed: isSub };
 
   let carQuery = `
     SELECT *
@@ -60,8 +58,30 @@ const getMyLeadListings = async (req = {}) => {
     params.push(endRange);
   }
 
-  const myCars = await query(carQuery, params);
-  return myCars;
+  if (isSub && filterValue === 'ALL') {
+    const q = `${carQuery}`;
+    myCars.leads = await query(q, params);
+    return myCars;
+  }
+
+  if (isSub && filterValue !== 'ALL') {
+    const q = `${carQuery} ORDER BY leads.id`;
+    myCars.leads = await query(q, params);
+    return myCars;
+  }
+
+  if (!isSub && filterValue === 'ALL') {
+    const q = `${carQuery} ORDER BY leads.id LIMIT 10`;
+    const allLeads = await query(q, params);
+    const completeLeads = allLeads.slice(0, 5);
+    const partialLeads = allLeads.slice(5, 10).map((lead) => {
+      return { id: lead.id, name: lead.name, city: lead.city, make: lead.make, model: lead.model };
+    });
+
+    myCars.leads = [...completeLeads, ...partialLeads];
+
+    return myCars;
+  }
 };
 
 const getMyRFQListings = async (req = {}) => {
@@ -131,31 +151,6 @@ const updateStatus = async (req = {}) => {
 
   return newStatus;
 };
-
-// const addLeads = async (req = {}) => {
-//   if (req.file) {
-//     const csvData = req.file.buffer.toString();
-//     const parsedData = Papa.parse(csvData, { header: true }).data;
-
-//     const filteredData = parsedData.filter((obj) => obj.name && obj.email && obj.make && obj.model && obj.variant);
-
-//     const sqlQuery = `
-//     START TRANSACTION;
-//     ${filteredData
-//       .map(
-//         (obj) => `
-//       INSERT INTO leads (name, mobile1, mobile2, email, price, make, model, variant, is_dealer, is_whatsapp, is_verified, slot_no, original_id, domain, status) VALUES ('${obj.name}', '${obj.mobile1}', '${obj.mobile2}', '${obj.email}', '${obj.price}', '${obj.make}', '${obj.model}', '${obj.variant}', ${obj.is_dealer}, ${obj.is_whatsapp}, ${obj.is_verified}, '${obj.slot_no}', '${obj.original_id}', '${obj.domain}', '${obj.status}');
-//     `
-//       )
-//       .join('\n')}
-//     COMMIT;
-//   `;
-
-//     const newLeads = await query(sqlQuery);
-
-//     return newLeads;
-//   }
-// };
 
 const addLeads = async (req = {}) => {
   if (req.file) {
