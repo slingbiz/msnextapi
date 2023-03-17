@@ -112,7 +112,7 @@ const getAllCarsCrawled = async (userId) => {
 
   if (userId == 2074) {
     cars = await query(`
-      SELECT cc.id, cc.img_src, cc.title, cc.kms_run, cc.price, ch.from_user, ch.to_user as user_id , u.user_name
+      SELECT cc.id, cc.img_src, cc.title, cc.kms_run, cc.price, ch.from_user as user_id, ch.to_user, u.user_name
       from chats ch
       LEFT JOIN cars_crawled cc ON cc.id = ch.car_crawled_id
       LEFT JOIN user u ON u.user_id = ch.from_user
