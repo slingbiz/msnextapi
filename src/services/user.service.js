@@ -110,7 +110,7 @@ const getAllCarsCrawled = async (userId) => {
             ch.to_user = ${userId} OR ch.from_user = ${userId}
         )`);
 
-  if (userId === 2074) {
+  if (userId == 2074) {
     cars = await query(`
       SELECT cc.id, cc.img_src, cc.title, cc.kms_run, cc.price, ch.from_user, ch.to_user as user_id , u.user_name
       from chats ch
