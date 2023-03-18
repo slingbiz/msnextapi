@@ -18,7 +18,18 @@ const getMyCarListings = async (req = {}) => {
 const getMyLeadListings = async (req = {}) => {
   const { phpSession, body } = req;
   const { user_id: userId } = phpSession;
-  const { filterValue = '', city = '', make = '', model = '', startRange = '', endRange = '' } = body;
+  const {
+    filterValue = '',
+    city = '',
+    make = '',
+    model = '',
+    startRange = '',
+    endRange = '',
+    page = 1,
+    rowsPerPage = 25,
+  } = body;
+
+  const offset = (page - 1) * rowsPerPage;
 
   const isSub = await isSubscribed(userId);
 
@@ -30,43 +41,61 @@ const getMyLeadListings = async (req = {}) => {
     WHERE 1=1 
   `;
 
+  let countQuery = `
+    SELECT COUNT(*) as count
+    FROM leads
+    WHERE 1=1
+  `;
+
   const params = [];
 
   if (city !== '') {
     carQuery += ' AND leads.city = ?';
+    countQuery += ' AND leads.city = ?';
     params.push(city);
   }
 
   if (make !== '') {
     carQuery += ' AND leads.make = ?';
+    countQuery += ' AND leads.make = ?';
     params.push(make);
   }
 
   if (model !== '') {
     carQuery += ' AND leads.model = ?';
+    countQuery += ' AND leads.model = ?';
     params.push(model);
   }
 
   if (startRange !== '' && endRange !== '') {
     carQuery += `AND leads.added_on >= ? AND leads.added_on <= ? `;
+    countQuery += `AND leads.added_on >= ? AND leads.added_on <= ? `;
     params.push(startRange, endRange);
   } else if (startRange !== '') {
     carQuery += `AND leads.added_on >= ? `;
+    countQuery += `AND leads.added_on >= ? `;
     params.push(startRange);
   } else if (endRange !== '') {
     carQuery += `AND leads.added_on <= ? `;
+    countQuery += `AND leads.added_on <= ? `;
     params.push(endRange);
   }
 
   if (isSub && filterValue === 'ALL') {
-    const q = `${carQuery}`;
+    const q = `${carQuery} ORDER BY leads.id LIMIT ${rowsPerPage} OFFSET ${offset}`;
+    const countq = `${countQuery}`;
     myCars.leads = await query(q, params);
+    const count = await query(countq, params);
+    myCars.totalCount = count[0].count;
     return myCars;
   }
 
   if (isSub && filterValue !== 'ALL') {
-    const q = `${carQuery} ORDER BY leads.id`;
+    const q = `${carQuery} ORDER BY leads.id LIMIT ${rowsPerPage} OFFSET ${offset}`;
+    const countq = `${countQuery}`;
     myCars.leads = await query(q, params);
+    const count = await query(countq, params);
+    myCars.totalCount = count[0].count;
     return myCars;
   }
 
@@ -88,58 +117,103 @@ const getMyRFQListings = async (req = {}) => {
   const { phpSession, body } = req;
   const { user_id: userId } = phpSession;
 
-  const { filterValue = '', city = '', make = '', model = '', startRange = '', endRange = '', country = 'in' } = body;
+  const {
+    filterValue = '',
+    city = '',
+    make = '',
+    model = '',
+    startRange = '',
+    endRange = '',
+    country = 'in',
+    page = 1,
+    rowsPerPage = 25,
+  } = body;
 
-  if (filterValue === 'ALL') {
-    const myCars = await query(
-      `SELECT * FROM cars_crawled JOIN rfq ON rfq.urlSrc LIKE CONCAT('%', cars_crawled.id, '%') AND cars_crawled.added_by = ?`,
-      [userId]
-    );
-    return myCars;
-  }
-
-  let carQuery = `
-    SELECT *
-    FROM cars_crawled
-    JOIN rfq ON rfq.urlSrc LIKE CONCAT('%', cars_crawled.id, '%') AND cars_crawled.added_by = ?
-    WHERE cars_crawled.country = ?
-  `;
-
+  const offset = (page - 1) * rowsPerPage;
   const params = [userId, country];
 
+  let filterQuery = '';
+
+  if (filterValue === 'ALL') {
+    const totalCount = await query(
+      `SELECT COUNT(*) as count FROM cars_crawled
+      JOIN rfq ON rfq.urlSrc LIKE CONCAT('%', cars_crawled.id, '%') AND cars_crawled.added_by = ?
+      WHERE cars_crawled.country = ?`,
+      [userId, country]
+    );
+
+    const queryWithPagination = `
+      SELECT *
+      FROM cars_crawled
+      JOIN rfq ON rfq.urlSrc LIKE CONCAT('%', cars_crawled.id, '%') AND cars_crawled.added_by = ?
+      WHERE cars_crawled.country = ?
+      ORDER BY rfq.added_on DESC
+      LIMIT ?
+      OFFSET ?
+    `;
+
+    params.push(rowsPerPage, offset);
+
+    const RFQListings = await query(queryWithPagination, params);
+
+    return { RFQListings, totalCount: totalCount[0].count };
+  }
+
   if (filterValue !== '') {
-    carQuery += ' AND rfq.status = ?';
+    filterQuery += ' AND rfq.status = ?';
     params.push(filterValue);
   } else {
     if (city !== '') {
-      carQuery += ' AND cars_crawled.city = ?';
+      filterQuery += ' AND cars_crawled.city = ?';
       params.push(city);
     }
 
     if (make !== '') {
-      carQuery += ' AND cars_crawled.make = ?';
+      filterQuery += ' AND cars_crawled.make = ?';
       params.push(make);
     }
 
     if (model !== '') {
-      carQuery += ' AND cars_crawled.model = ?';
+      filterQuery += ' AND cars_crawled.model = ?';
       params.push(model);
     }
 
     if (startRange !== '' && endRange !== '') {
-      carQuery += `AND rfq.added_on >= ? AND rfq.added_on <= ? `;
+      filterQuery += ' AND rfq.added_on >= ? AND rfq.added_on <= ?';
       params.push(startRange, endRange);
     } else if (startRange !== '') {
-      carQuery += `AND rfq.added_on >= ? `;
+      filterQuery += ' AND rfq.added_on >= ?';
       params.push(startRange);
     } else if (endRange !== '') {
-      carQuery += `AND rfq.added_on <= ? `;
+      filterQuery += ' AND rfq.added_on <= ?';
       params.push(endRange);
     }
   }
 
-  const myCars = await query(carQuery, params);
-  return myCars;
+  const queryWithPagination = `
+      SELECT *
+      FROM cars_crawled
+      JOIN rfq ON rfq.urlSrc LIKE CONCAT('%', cars_crawled.id, '%') AND cars_crawled.added_by = ?
+      WHERE cars_crawled.country = ?
+      ${filterQuery}
+      ORDER BY rfq.added_on DESC
+      LIMIT ?
+      OFFSET ?
+    `;
+
+  const totalCount = await query(
+    `SELECT COUNT(*) as count FROM cars_crawled
+    JOIN rfq ON rfq.urlSrc LIKE CONCAT('%', cars_crawled.id, '%') AND cars_crawled.added_by = ?
+    WHERE cars_crawled.country = ?
+    ${filterQuery}`,
+    params
+  );
+
+  params.push(rowsPerPage, offset);
+
+  const RFQListings = await query(queryWithPagination, params);
+
+  return { RFQListings, totalCount: totalCount[0].count };
 };
 
 const updateStatus = async (req = {}) => {

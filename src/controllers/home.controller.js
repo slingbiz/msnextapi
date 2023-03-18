@@ -1,4 +1,6 @@
 const httpStatus = require('http-status');
+const config = require('../config/config');
+const stripe = require('stripe')(config.stripe.secretKey);
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
@@ -35,7 +37,36 @@ const getCities = catchAsync(async (req, res) => {
   res.send(cities);
 });
 
+const paymentConfig = catchAsync(async (req, res) => {
+  res.send({
+    publishableKey: config.stripe.publishableKey,
+  });
+});
+
+const createPaymentIntent = catchAsync(async (req, res) => {
+  const { amount, currency } = req.body;
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      currency: 'EUR',
+      amount,
+      automatic_payment_methods: { enabled: true },
+    });
+
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+    });
+  } catch (e) {
+    return res.status(400).send({
+      error: {
+        message: e.message,
+      },
+    });
+  }
+});
+
 module.exports = {
+  createPaymentIntent,
+  paymentConfig,
   getBrands,
   getModels,
   getCities,
