@@ -111,20 +111,28 @@ const deleteUserById = async (userId) => {
 };
 
 const getAllCarsCrawled = async (userId) => {
-  const cars =
+  let cars =
     await query(`SELECT DISTINCT c.id, c.img_src , c.title, c.kms_run, c.price, other_user.user_id, other_user.user_name
-  FROM cars_crawled c
-  JOIN user u ON c.added_by = u.user_id
-  LEFT JOIN chats ch ON c.id = ch.car_crawled_id AND (ch.from_user = u.user_id OR ch.to_user = u.user_id)
-  JOIN user other_user ON (
-      (ch.to_user = u.user_id AND ch.from_user != u.user_id AND other_user.user_id = ch.from_user)
-      OR (ch.from_user = u.user_id AND ch.to_user != u.user_id AND other_user.user_id = ch.to_user)
-  )
-  WHERE c.added_by = ${userId} AND (
-      ch.to_user = ${userId} OR ch.from_user = ${userId}
-  )
-  
-  `);
+        FROM cars_crawled c
+        JOIN user u ON c.added_by = u.user_id
+        LEFT JOIN chats ch ON c.id = ch.car_crawled_id AND (ch.from_user = u.user_id OR ch.to_user = u.user_id)
+        JOIN user other_user ON (
+            (ch.to_user = u.user_id AND ch.from_user != u.user_id AND other_user.user_id = ch.from_user)
+            OR (ch.from_user = u.user_id AND ch.to_user != u.user_id AND other_user.user_id = ch.to_user)
+        )
+        WHERE c.added_by = '${userId}' AND (
+            ch.to_user = ${userId} OR ch.from_user = ${userId}
+        )`);
+
+  if (userId == 2074) {
+    cars = await query(`
+      SELECT cc.id, cc.img_src, cc.title, cc.kms_run, cc.price, ch.from_user as user_id, ch.to_user, u.user_name
+      from chats ch
+      LEFT JOIN cars_crawled cc ON cc.id = ch.car_crawled_id
+      LEFT JOIN user u ON u.user_id = ch.from_user
+      WHERE ch.to_user = 2074
+      GROUP BY ch.car_crawled_id, ch.from_user;`);
+  }
 
   return cars;
 };

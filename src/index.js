@@ -41,7 +41,7 @@ async function start() {
         const name = await getUserNameById(userId);
 
         socket.userId = userId; // eslint-disable-line no-param-reassign
-        socket.userName = name.user_name; // eslint-disable-line no-param-reassign
+        socket.userName = name?.user_name || 'N/A'; // eslint-disable-line no-param-reassign
         connectedUsers[userId] = socket;
 
         const ActiveUsers = Object.values(connectedUsers).map((user) => ({
