@@ -47,3 +47,9 @@ remove status column from Leads Table:
 ```bash
 ALTER TABLE `leads` DROP `status`;
 ```
+
+add columns in subscription table
+
+```bash
+ALTER TABLE `subscriptions` ADD `subscription_id` VARCHAR(255) NOT NULL AFTER `user_id`, ADD `currency` TEXT NOT NULL AFTER `subscription_id`, ADD `payment_id` VARCHAR(255) NOT NULL AFTER `currency`;
+```

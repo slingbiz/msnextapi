@@ -4,7 +4,7 @@ const query = require('../utils/mysql');
 const getBrands = async (body) => {
   const { country = '' } = body;
 
-  let sql = 'SELECT name from brands WHERE is_deleted= 0 ';
+  let sql = 'SELECT name from brands WHERE is_deleted= 0 OR is_deleted IS NULL';
   const params = [];
 
   if (country !== '') {

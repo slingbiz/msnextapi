@@ -43,17 +43,80 @@ const paymentConfig = catchAsync(async (req, res) => {
   });
 });
 
+const getProducts = catchAsync(async (req, res) => {
+  const products = await stripe.products.list();
+  const prices = await stripe.prices.list();
+  if (!products) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'No data found');
+  }
+  if (!prices) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'No data found');
+  }
+
+  const mergedData = [];
+  products.data.forEach((product) => {
+    prices.data.forEach((price) => {
+      if (price.product === product.id) {
+        mergedData.push({
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: price.unit_amount,
+          priceId: price.id,
+          currency: price.currency,
+          interval: price.recurring.interval,
+        });
+      }
+    });
+  });
+
+  mergedData.sort((a, b) => {
+    if (a.interval === 'month' && b.interval === 'year') {
+      return -1;
+    }
+    if (a.interval === 'year' && b.interval === 'month') {
+      return 1;
+    }
+    return 0;
+  });
+
+  res.send(mergedData);
+});
+
 const createPaymentIntent = catchAsync(async (req, res) => {
-  const { amount, currency } = req.body;
+  const { name, email, paymentMethod, priceId } = req.body;
+
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      currency: 'EUR',
-      amount,
-      automatic_payment_methods: { enabled: true },
+    // create a stripe customer
+    const customer = await stripe.customers.create({
+      name,
+      email,
+      payment_method: paymentMethod,
+      invoice_settings: {
+        default_payment_method: paymentMethod,
+      },
     });
 
+    // create a stripe subscription
+    const subscription = await stripe.subscriptions.create({
+      customer: customer.id,
+      items: [{ price: priceId }],
+      payment_settings: {
+        payment_method_options: {
+          card: {
+            request_three_d_secure: 'any',
+          },
+        },
+        payment_method_types: ['card'],
+        save_default_payment_method: 'on_subscription',
+      },
+      expand: ['latest_invoice.payment_intent'],
+    });
+
+    // return the client secret and subscription id
     res.send({
-      clientSecret: paymentIntent.client_secret,
+      clientSecret: subscription.latest_invoice.payment_intent.client_secret,
+      subscriptionId: subscription.id,
     });
   } catch (e) {
     return res.status(400).send({
@@ -70,5 +133,6 @@ module.exports = {
   getBrands,
   getModels,
   getCities,
+  getProducts,
   health,
 };

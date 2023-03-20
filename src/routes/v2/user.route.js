@@ -11,6 +11,8 @@ router.route('/health').get(phpAuth, userController.health);
 
 router.route('/cars-crawled/:userId').get(userController.userCarsCrawled);
 
+router.route('/createSubscription/:userId').post(phpAuth, userController.createSubscription);
+
 router
   .route('/')
   .post(auth('manageUsers'), validate(userValidation.createUser), userController.createUser)
