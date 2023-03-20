@@ -135,11 +135,13 @@ const getMyRFQListings = async (req = {}) => {
   let filterQuery = '';
 
   if (filterValue === 'ALL') {
+
     const totalCount = await query(
       `SELECT COUNT(*) as count FROM cars_crawled
       JOIN rfq ON rfq.urlSrc LIKE CONCAT('%', cars_crawled.id, '%') AND cars_crawled.added_by = ?
       WHERE cars_crawled.country = ?`,
       [userId, country]
+ 
     );
 
     const queryWithPagination = `
