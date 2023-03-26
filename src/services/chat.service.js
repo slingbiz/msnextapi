@@ -9,17 +9,18 @@ const createMessage = async (values) => {
     )},'${message}')`
   );
 
+  // Asynchronously save as RFQ after first message
   return newMessage;
 };
 
 const getMessages = async (values) => {
   const { sender, receiver, car } = values;
   const data = await query(
-    `SELECT * FROM chats 
-    WHERE car_crawled_id=${car} AND 
+    `SELECT * FROM chats
+    WHERE car_crawled_id=${car} AND
     (
       (from_user='${sender}' AND to_user='${receiver}')
-       OR 
+       OR
       (from_user='${receiver}' AND to_user='${sender}')
     )`
   );
