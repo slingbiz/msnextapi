@@ -4,6 +4,7 @@ const { timingSafeEqual } = require('crypto');
 const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const query = require('../utils/mysql');
+const logger = require('../config/logger');
 /**
  * Create a user
  * @param {Object} userBody
@@ -59,13 +60,13 @@ const getUserNameById = async (id) => {
   return users[0];
 };
 
-/**
- * Get user by email
- * @param {string} email
- * @returns {Promise<User>}
- */
 const getUserByEmail = async (email) => {
-  return User.findOne({ email });
+  const user = await query(
+    `SELECT user_id FROM user WHERE user_email = ?
+    LIMIT 1`,
+    [email]
+  );
+  return user[0];
 };
 
 const updateUserById = async (userId, updateBody, res) => {
@@ -137,33 +138,68 @@ const getAllCarsCrawled = async (userId) => {
   return cars;
 };
 
-const createSubscription = async (req) => {
-  const { amount, currency, interval, paymentId, subscriptionId } = req.body;
-  const { userId } = req.params;
+const initiateSubscription = async (checkoutCompletedData) => {
+  const { customer, email, subscription_id } = checkoutCompletedData;
 
-  const checkQuery = `SELECT COUNT(*) AS count FROM subscriptions WHERE user_id = ? AND subscription_id = ? AND payment_id = ?`;
-  const [existingSubscription] = await query(checkQuery, [userId, subscriptionId, paymentId]);
+  const user = await getUserByEmail(email);
+  const userId = user.user_id;
 
-  if (existingSubscription.count > 0) {
-    return existingSubscription;
+  if (!userId) {
+    throw new Error(`User with email ${email} does not exist`);
+  }
+
+  const checkQuery = `SELECT * FROM subscriptions WHERE user_id = ? AND subscription_id = ? AND customer_id = ?`;
+  const [subscription] = await query(checkQuery, [userId, subscription_id, customer]);
+
+  if (subscription) {
+    logger.error(`Subscription with subscription_id=${subscription_id} and customer_id=${customer} already exists`);
+    response.status(400).send(`Subscription already exists`);
+    return;
+  }
+
+  const iQuery = `INSERT INTO subscriptions (user_id, subscription_id, customer_id) VALUES (?, ?, ?)`;
+
+  const initSubscription = await query(iQuery, [userId, subscription_id, customer]);
+
+  return initSubscription;
+};
+
+const createSubscription = async (data) => {
+  const { subscription_id, customer_id, amount, currency, interval, product } = data;
+
+  // Fetch the subscription row from the subscription table
+  const fetchSubscriptionQuery = `SELECT * FROM subscriptions WHERE subscription_id = ? AND customer_id = ?`;
+  const [subscription] = await query(fetchSubscriptionQuery, [subscription_id, customer_id]);
+
+  if (!subscription) {
+    logger.error(`Subscription with subscription_id=${subscription_id} and customer_id=${customer_id} not found`);
+    response.status(404).send(`Subscription not found`);
+    return;
   }
 
   let subQuery;
 
   if (interval === 'year') {
-    subQuery = `INSERT INTO subscriptions (user_id, subscription_id, currency, payment_id, subscription_type, price, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 1 YEAR))`;
+    subQuery = `UPDATE subscriptions SET currency = ?, product = ?, subscription_type = ? , price = ?, start_date = NOW(), end_date = DATE_ADD(NOW(), INTERVAL 1 YEAR) WHERE subscription_id = ? AND customer_id = ?`;
   } else {
-    subQuery = `INSERT INTO subscriptions (user_id, subscription_id, currency, payment_id, subscription_type, price, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH))`;
+    subQuery = `UPDATE subscriptions SET currency = ?, product = ?, subscription_type = ? , price = ?, start_date = NOW(), end_date = DATE_ADD(NOW(), INTERVAL 1 MONTH) WHERE subscription_id = ? AND customer_id = ?`;
   }
 
-  const subscription = await query(subQuery, [userId, subscriptionId, currency, paymentId, interval, amount]);
+  const result = await query(subQuery, [currency, product, interval, amount, subscription_id, customer_id]);
 
-  return subscription;
+  if (result.affectedRows === 0) {
+    logger.error(`Failed to update subscription with subscription_id=${subscription_id} and customer_id=${customer_id}`);
+    response.status(500).send(`Failed to update subscription`);
+    return;
+  }
+
+  return result;
 };
 
 module.exports = {
   createUser,
   createSubscription,
+  initiateSubscription,
   queryUsers,
   getUserById,
   getUserNameById,

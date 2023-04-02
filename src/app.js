@@ -14,8 +14,12 @@ const { authLimiter } = require('./middlewares/rateLimiter');
 const routes = require('./routes/v2');
 const { errorConverter, errorHandler } = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
+const StripeWebhookEvent = require('./stripeHook');
 
 const app = express();
+
+// initialize stripe webhook route before parsers otherwise it will not work
+app.post('/stripe-webhook', express.raw({ type: 'application/json' }), StripeWebhookEvent);
 
 if (config.env !== 'test') {
   app.use(morgan.successHandler);

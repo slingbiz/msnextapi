@@ -53,3 +53,9 @@ add columns in subscription table
 ```bash
 ALTER TABLE `subscriptions` ADD `subscription_id` VARCHAR(255) NOT NULL AFTER `user_id`, ADD `currency` TEXT NOT NULL AFTER `subscription_id`, ADD `payment_id` VARCHAR(255) NOT NULL AFTER `currency`;
 ```
+
+change payment_id to product and add stripe customer_id
+
+```bash
+ALTER TABLE `subscriptions` CHANGE `payment_id` `product` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL، ADD `customer_id` VARCHAR(255) NOT NULL AFTER `subscription_id`;
+```

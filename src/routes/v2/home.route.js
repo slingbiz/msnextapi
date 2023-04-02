@@ -11,7 +11,5 @@ router.route('/getBrands').post(phpAuth, homeController.getBrands);
 router.route('/getModels').post(phpAuth, homeController.getModels);
 router.route('/getCities').get(phpAuth, homeController.getCities);
 router.route('/getProducts').get(phpAuth, homeController.getProducts);
-router.route('/payment-config').get(phpAuth, homeController.paymentConfig);
-router.route('/create-payment-intent').post(phpAuth, homeController.createPaymentIntent);
 
 module.exports = router;
