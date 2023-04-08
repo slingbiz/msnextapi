@@ -4,6 +4,7 @@ const { timingSafeEqual } = require('crypto');
 const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const query = require('../utils/mysql');
+const logger = require('../config/logger');
 /**
  * Create a user
  * @param {Object} userBody
@@ -30,13 +31,27 @@ const queryUsers = async () => {
   return users;
 };
 
+const isSubscribed = async (userId) => {
+  const users = await query('SELECT COUNT(*) AS count FROM subscriptions WHERE user_id = ? AND end_date > NOW() ', [userId]);
+  return users[0].count > 0;
+};
+
 /**
  * Get user by id
  * @param {ObjectId} id
  * @returns {Promise<User>}
  */
 const getUserById = async (id) => {
-  const users = await query(`SELECT * FROM user WHERE user_id = ${id} LIMIT 1`);
+  const users = await query(
+    `
+    SELECT u.user_id, u.user_name, u.user_email, u.user_mobile, u.country, u.is_admin, s.subscription_type 
+    FROM user AS u 
+    LEFT JOIN subscriptions AS s ON u.user_id = s.user_id 
+    WHERE u.user_id = ? 
+    LIMIT 1`,
+    [id]
+  );
+
   return users;
 };
 
@@ -45,13 +60,13 @@ const getUserNameById = async (id) => {
   return users[0];
 };
 
-/**
- * Get user by email
- * @param {string} email
- * @returns {Promise<User>}
- */
 const getUserByEmail = async (email) => {
-  return User.findOne({ email });
+  const user = await query(
+    `SELECT user_id FROM user WHERE user_email = ?
+    LIMIT 1`,
+    [email]
+  );
+  return user[0];
 };
 
 const updateUserById = async (userId, updateBody, res) => {
@@ -123,8 +138,68 @@ const getAllCarsCrawled = async (userId) => {
   return cars;
 };
 
+const initiateSubscription = async (checkoutCompletedData) => {
+  const { customer, email, subscription_id } = checkoutCompletedData;
+
+  const user = await getUserByEmail(email);
+  const userId = user.user_id;
+
+  if (!userId) {
+    throw new Error(`User with email ${email} does not exist`);
+  }
+
+  const checkQuery = `SELECT * FROM subscriptions WHERE user_id = ? AND subscription_id = ? AND customer_id = ?`;
+  const [subscription] = await query(checkQuery, [userId, subscription_id, customer]);
+
+  if (subscription) {
+    logger.error(`Subscription with subscription_id=${subscription_id} and customer_id=${customer} already exists`);
+    response.status(400).send(`Subscription already exists`);
+    return;
+  }
+
+  const iQuery = `INSERT INTO subscriptions (user_id, subscription_id, customer_id) VALUES (?, ?, ?)`;
+
+  const initSubscription = await query(iQuery, [userId, subscription_id, customer]);
+
+  return initSubscription;
+};
+
+const createSubscription = async (data) => {
+  const { subscription_id, customer_id, amount, currency, interval, product } = data;
+
+  // Fetch the subscription row from the subscription table
+  const fetchSubscriptionQuery = `SELECT * FROM subscriptions WHERE subscription_id = ? AND customer_id = ?`;
+  const [subscription] = await query(fetchSubscriptionQuery, [subscription_id, customer_id]);
+
+  if (!subscription) {
+    logger.error(`Subscription with subscription_id=${subscription_id} and customer_id=${customer_id} not found`);
+    response.status(404).send(`Subscription not found`);
+    return;
+  }
+
+  let subQuery;
+
+  if (interval === 'year') {
+    subQuery = `UPDATE subscriptions SET currency = ?, product = ?, subscription_type = ? , price = ?, start_date = NOW(), end_date = DATE_ADD(NOW(), INTERVAL 1 YEAR) WHERE subscription_id = ? AND customer_id = ?`;
+  } else {
+    subQuery = `UPDATE subscriptions SET currency = ?, product = ?, subscription_type = ? , price = ?, start_date = NOW(), end_date = DATE_ADD(NOW(), INTERVAL 1 MONTH) WHERE subscription_id = ? AND customer_id = ?`;
+  }
+
+  const result = await query(subQuery, [currency, product, interval, amount, subscription_id, customer_id]);
+
+  if (result.affectedRows === 0) {
+    logger.error(`Failed to update subscription with subscription_id=${subscription_id} and customer_id=${customer_id}`);
+    response.status(500).send(`Failed to update subscription`);
+    return;
+  }
+
+  return result;
+};
+
 module.exports = {
   createUser,
+  createSubscription,
+  initiateSubscription,
   queryUsers,
   getUserById,
   getUserNameById,
@@ -132,4 +207,5 @@ module.exports = {
   updateUserById,
   deleteUserById,
   getAllCarsCrawled,
+  isSubscribed,
 };

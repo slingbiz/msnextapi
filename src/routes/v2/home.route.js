@@ -10,5 +10,6 @@ router.route('/health').get(phpAuth, homeController.health);
 router.route('/getBrands').post(phpAuth, homeController.getBrands);
 router.route('/getModels').post(phpAuth, homeController.getModels);
 router.route('/getCities').get(phpAuth, homeController.getCities);
+router.route('/getProducts').get(phpAuth, homeController.getProducts);
 
 module.exports = router;

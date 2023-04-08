@@ -45,8 +45,14 @@ const userCarsCrawled = catchAsync(async (req, res) => {
   res.status(200).send(result);
 });
 
+const createSubscription = catchAsync(async (req, res) => {
+  const result = await userService.createSubscription(req);
+  res.status(200).send(result);
+});
+
 module.exports = {
   createUser,
+  createSubscription,
   getUsers,
   getUser,
   updateUser,

@@ -27,6 +27,15 @@ const envVarsSchema = Joi.object()
     SMTP_USERNAME: Joi.string().description('username for email server'),
     SMTP_PASSWORD: Joi.string().description('password for email server'),
     EMAIL_FROM: Joi.string().description('the from field in the emails sent by the app'),
+    STRIPE_PUBLISHABLE_KEY: Joi.string().description('Stripe publishable key'),
+    STRIPE_SECRET_KEY: Joi.string().description('Stripe secret key'),
+    STRIPE_WEBHOOK_SECRET: Joi.string().description('Stripe webhook secret'),
+    STRIPE_PRODUCT_PRO_ID: Joi.string().description('Stripe product pro id'),
+    STRIPE_PRODUCT_PRO_PLUS_ID: Joi.string().description('Stripe product pro plus id'),
+    STRIPE_INR_MONTHLY_SUBSCRIPTION_LINK: Joi.string().description('Stripe inr monthly subscription link'),
+    STRIPE_INR_YEARLY_SUBSCRIPTION_LINK: Joi.string().description('Stripe inr yearly subscription link'),
+    STRIPE_AED_MONTHLY_SUBSCRIPTION_LINK: Joi.string().description('Stripe aed monthly subscription link'),
+    STRIPE_AED_YEARLY_SUBSCRIPTION_LINK: Joi.string().description('Stripe aed yearly subscription link'),
   })
   .unknown();
 
@@ -56,5 +65,16 @@ module.exports = {
       },
     },
     from: envVars.EMAIL_FROM,
+  },
+  stripe: {
+    publishableKey: envVars.STRIPE_PUBLISHABLE_KEY,
+    secretKey: envVars.STRIPE_SECRET_KEY,
+    webhookSecret: envVars.STRIPE_WEBHOOK_SECRET,
+    productProId: envVars.STRIPE_PRODUCT_PRO_ID,
+    productProPlusId: envVars.STRIPE_PRODUCT_PRO_PLUS_ID,
+    inrMonthlySubscriptionLink: envVars.STRIPE_INR_MONTHLY_SUBSCRIPTION_LINK,
+    inrYearlySubscriptionLink: envVars.STRIPE_INR_YEARLY_SUBSCRIPTION_LINK,
+    aedMonthlySubscriptionLink: envVars.STRIPE_AED_MONTHLY_SUBSCRIPTION_LINK,
+    aedYearlySubscriptionLink: envVars.STRIPE_AED_YEARLY_SUBSCRIPTION_LINK,
   },
 };
