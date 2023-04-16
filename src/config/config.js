@@ -11,7 +11,7 @@ const envVarsSchema = Joi.object()
     SERVICE_PORT: Joi.number().default(3000),
     MYSQL_HOST: Joi.string().required().description('Mysql HOST url'),
     MYSQL_USERNAME: Joi.string().required().description('Mysql USERNAME'),
-    MYSQL_PASSWORD: Joi.string().required().description('Mysql PASSWORD'),
+    // MYSQL_PASSWORD: Joi.string().required().description('Mysql PASSWORD'),
     MYSQL_DATABASE: Joi.string().required().description('Mysql DATABASE'),
     JWT_SECRET: Joi.string().required().description('JWT secret key'),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30).description('minutes after which access tokens expire'),
@@ -36,6 +36,9 @@ const envVarsSchema = Joi.object()
     STRIPE_INR_YEARLY_SUBSCRIPTION_LINK: Joi.string().description('Stripe inr yearly subscription link'),
     STRIPE_AED_MONTHLY_SUBSCRIPTION_LINK: Joi.string().description('Stripe aed monthly subscription link'),
     STRIPE_AED_YEARLY_SUBSCRIPTION_LINK: Joi.string().description('Stripe aed yearly subscription link'),
+    TWILIO_ACCOUNT_SID: Joi.string().description('Twilio account sid'),
+    TWILIO_AUTH_TOKEN: Joi.string().description('Twilio auth token'),
+    TWILIO_PHONE_NUMBER: Joi.string().description('Twilio phone number'),
   })
   .unknown();
 
@@ -76,5 +79,10 @@ module.exports = {
     inrYearlySubscriptionLink: envVars.STRIPE_INR_YEARLY_SUBSCRIPTION_LINK,
     aedMonthlySubscriptionLink: envVars.STRIPE_AED_MONTHLY_SUBSCRIPTION_LINK,
     aedYearlySubscriptionLink: envVars.STRIPE_AED_YEARLY_SUBSCRIPTION_LINK,
+  },
+  twilio: {
+    accountSid: envVars.TWILIO_ACCOUNT_SID,
+    authToken: envVars.TWILIO_AUTH_TOKEN,
+    phoneNumber: envVars.TWILIO_PHONE_NUMBER,
   },
 };
