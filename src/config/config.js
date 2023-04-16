@@ -36,6 +36,9 @@ const envVarsSchema = Joi.object()
     STRIPE_INR_YEARLY_SUBSCRIPTION_LINK: Joi.string().description('Stripe inr yearly subscription link'),
     STRIPE_AED_MONTHLY_SUBSCRIPTION_LINK: Joi.string().description('Stripe aed monthly subscription link'),
     STRIPE_AED_YEARLY_SUBSCRIPTION_LINK: Joi.string().description('Stripe aed yearly subscription link'),
+    TWILIO_ACCOUNT_SID: Joi.string().description('Twilio account sid'),
+    TWILIO_AUTH_TOKEN: Joi.string().description('Twilio auth token'),
+    TWILIO_PHONE_NUMBER: Joi.string().description('Twilio phone number'),
   })
   .unknown();
 
@@ -76,5 +79,10 @@ module.exports = {
     inrYearlySubscriptionLink: envVars.STRIPE_INR_YEARLY_SUBSCRIPTION_LINK,
     aedMonthlySubscriptionLink: envVars.STRIPE_AED_MONTHLY_SUBSCRIPTION_LINK,
     aedYearlySubscriptionLink: envVars.STRIPE_AED_YEARLY_SUBSCRIPTION_LINK,
+  },
+  twilio: {
+    accountSid: envVars.TWILIO_ACCOUNT_SID,
+    authToken: envVars.TWILIO_AUTH_TOKEN,
+    phoneNumber: envVars.TWILIO_PHONE_NUMBER,
   },
 };

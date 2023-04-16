@@ -59,3 +59,9 @@ change payment_id to product and add stripe customer_id
 ```bash
 ALTER TABLE `subscriptions` CHANGE `payment_id` `product` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL، ADD `customer_id` VARCHAR(255) NOT NULL AFTER `subscription_id`;
 ```
+
+add sent_count table to uc_dealers
+
+```bash
+ALTER TABLE `uc_dealers` ADD `sent_count` INT NOT NULL AFTER `description`;
+```
