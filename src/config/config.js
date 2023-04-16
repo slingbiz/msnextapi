@@ -11,7 +11,7 @@ const envVarsSchema = Joi.object()
     SERVICE_PORT: Joi.number().default(3000),
     MYSQL_HOST: Joi.string().required().description('Mysql HOST url'),
     MYSQL_USERNAME: Joi.string().required().description('Mysql USERNAME'),
-    // MYSQL_PASSWORD: Joi.string().required().description('Mysql PASSWORD'),
+    MYSQL_PASSWORD: Joi.string().required().description('Mysql PASSWORD'),
     MYSQL_DATABASE: Joi.string().required().description('Mysql DATABASE'),
     JWT_SECRET: Joi.string().required().description('JWT secret key'),
     JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30).description('minutes after which access tokens expire'),
